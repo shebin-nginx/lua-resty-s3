@@ -433,21 +433,11 @@ local function http_req(method, uri, body, myheaders, timeout)
     if method == "PUT" or method == "POST" then
         local debug_body = nil
         local content_type = myheaders["Content-Type"]
-        if content_type == nil or _M.startswith(content_type, "text") then 
-            if string.len(body) < 1024 then
-                debug_body = body
-            else
-                debug_body = string.sub(body, 1, 1024)
-            end
-        else 
-            debug_body = "[[not text body: " .. tostring(content_type) .. "]]"
-        end
         req_debug = "curl -v -X " .. method .. " " .. _M.headerstr(myheaders) .. " '" .. uri .. "' -d '" .. debug_body .. "' -o /dev/null"
     else
         body = nil
         req_debug = "curl -v -X " .. method .. " " .. _M.headerstr(myheaders) .. " '" .. uri .. "' -o /dev/null"
-    end
-    ngx.log(ngx.INFO, method, " REQUEST [ ", req_debug, " ] timeout:", timeout_str)
+    end    
     local httpc = http.new()
     if timeout then
         httpc:set_timeout(timeout)
