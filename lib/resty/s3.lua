@@ -135,30 +135,30 @@ function _M:get(key)
 end
 
 -- http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html
-function _M:put(key, value, headers)
-    local short_uri = self:get_short_uri(key)
-    headers = headers or util.new_headers()
-    local authorization = self.auth:authorization_v4("PUT", short_uri, headers, value)
+function _M:put(key, value, content_type, content_encoding )
+  local short_uri = self:get_short_uri(key)
+  headers = util.new_headers()
+  headers['Content-Type']= content_type
+  headers['Content-Encoding'] = content_encoding
+  local authorization = self.auth:authorization_v4("PUT", short_uri, headers, value)
 
-    local url = "http://" .. self.host .. util.uri_encode(short_uri, false)
-    ngx.log(ngx.INFO, "----- url: ", url)
-    -- TODO: check authorization.
-    local res, err, req_debug = util.http_put(url, value, headers, self.timeout)
-    if not res then
-        ngx.log(ngx.ERR, "fail request to aws s3 service: [ ", req_debug, " ] err: ", err)
-        return false, "request to aws s3 failed", 500
-    end
+  local url = "http://" .. self.host .. util.uri_encode(short_uri, false)
+  ngx.log(ngx.INFO, "----- url: ", url)
+  -- TODO: check authorization.
+  local res, err, req_debug = util.http_put(url, value, headers, self.timeout)
+  if not res then
+    ngx.log(ngx.ERR, "fail request to aws s3 service: [ ", req_debug, " ] err: ", err)
+    return false, "request to aws s3 failed", 500
+  end
 
-    ngx.log(ngx.INFO, "aws s3 request:", req_debug, ", status:", res.status, ",body:", tostring(res.body))
+  ngx.log(ngx.INFO, "aws s3 status:", res.status)
 
-    if res.status ~= 200 then
-        ngx.log(ngx.ERR, "request [ ", req_debug, " ] failed! status:", res.status, ", body:", tostring(res.body))
-        return false, res.body or "request to aws s3 failed", res.status
-    end
+  if res.status ~= 200 then
+    ngx.log(ngx.ERR, "request [ ", req_debug, " ] failed! status:", res.status)
+    return false, res.body or "request to aws s3 failed", res.status
+  end
 
-    ngx.log(ngx.INFO, "aws returned: body: [", res.body, "]")
-
-    return true, res.body
+  return true, res.body
 end
 
 -- https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
